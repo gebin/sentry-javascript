@@ -4,6 +4,7 @@ import { Mechanism } from './mechanism';
 import { Request } from './request';
 import { SdkInfo } from './sdkinfo';
 import { Severity } from './severity';
+import { Span } from './span';
 import { Stacktrace } from './stacktrace';
 import { User } from './user';
 
@@ -34,6 +35,7 @@ export interface Event {
   tags?: { [key: string]: string };
   extra?: { [key: string]: any };
   user?: User;
+  spans?: Span[];
 }
 
 /** JSDoc */
