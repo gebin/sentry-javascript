@@ -94,6 +94,7 @@ export abstract class BaseBackend<O extends Options> implements Backend {
    * @inheritDoc
    */
   public sendEvent(event: Event): void {
+    logger.log(`Sending event with ${this.transport.constructor.name}`);
     this.transport.sendEvent(event).catch(reason => {
       logger.error(`Error while sending event: ${reason}`);
     });
