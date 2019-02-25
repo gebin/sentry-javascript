@@ -132,7 +132,7 @@ function serializeValue<T>(value: T): T | string {
     // Node.js REPL notation
     return '[Array]';
   } else {
-    return normalizeValue(value) as T;
+    return type as string;
   }
 }
 
@@ -326,31 +326,38 @@ function normalizeValue(value: any, key?: any): any {
  * @param obj Object to be decycled
  * @param memo Optional Memo class handling decycling
  */
-export function decycle(obj: any, memo: Memo = new Memo()): any {
-  // tslint:disable-next-line:no-unsafe-any
-  const copy = isArray(obj) ? obj.slice() : isPlainObject(obj) ? assign({}, obj) : obj;
-  const normalized = normalizeValue(obj);
+export function decycle(obj: any, depth: number = +Infinity, memo: Memo = new Memo()): any {
+  if (depth === 0) {
+    return serializeValue(obj);
+  }
 
+  const normalized = normalizeValue(obj);
   // If an object was normalized to its string form, we should just bail out as theres no point in going down that branch
-  if (typeof normalized === 'string') {
+  if (isPrimitive(normalized)) {
     return normalized;
   }
 
-  if (!isPrimitive(obj)) {
-    if (memo.memoize(obj)) {
-      return '[Circular ~]';
+  const copy = isArray(normalized)
+    ? (normalized as any[]).slice()
+    : isPlainObject(normalized)
+    ? assign({}, normalized)
+    : normalized;
+
+  if (memo.memoize(obj)) {
+    return '[Circular ~]';
+  }
+
+  // tslint:disable-next-line
+  for (const key in obj) {
+    // Avoid iterating over fields in the prototype if they've somehow been exposed to enumeration.
+    if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+      continue;
     }
     // tslint:disable-next-line
-    for (const key in obj) {
-      // Avoid iterating over fields in the prototype if they've somehow been exposed to enumeration.
-      if (!Object.prototype.hasOwnProperty.call(obj, key)) {
-        continue;
-      }
-      // tslint:disable-next-line
-      copy[key] = decycle(obj[key], memo);
-    }
-    memo.unmemoize(obj);
+    copy[key] = decycle(obj[key], depth - 1, memo);
   }
+
+  memo.unmemoize(obj);
 
   return copy;
 }
@@ -362,9 +369,12 @@ export function decycle(obj: any, memo: Memo = new Memo()): any {
  * translates undefined/NaN values to "[undefined]"/"[NaN]" respectively,
  * and takes care of Error objects serialization
  */
-function serializer(options: { normalize: boolean } = { normalize: true }): (key: string, value: any) => any {
+function serializer(
+  options: { normalize?: boolean; depth?: number } = { normalize: true },
+): (key: string, value: any) => any {
   // tslint:disable-next-line
-  return (key: string, value: object) => (options.normalize ? normalizeValue(decycle(value), key) : decycle(value));
+  return (key: string, value: object) =>
+    options.normalize ? normalizeValue(decycle(value, options.depth), key) : decycle(value, options.depth);
 }
 
 /**
@@ -372,9 +382,9 @@ function serializer(options: { normalize: boolean } = { normalize: true }): (key
  *
  * Creates a copy of the input by applying serializer function on it and parsing it back to unify the data
  */
-export function safeNormalize(input: any): any {
+export function safeNormalize(input: any, depth?: number): any {
   try {
-    return JSON.parse(JSON.stringify(input, serializer({ normalize: true })));
+    return JSON.parse(JSON.stringify(input, serializer({ normalize: true, depth })));
   } catch (_oO) {
     return '**non-serializable**';
   }
