@@ -36,7 +36,11 @@ export interface Event {
   extra?: { [key: string]: any };
   user?: User;
   spans?: Span[];
+  type?: EventType;
 }
+
+/** JSDoc */
+export type EventType = 'none';
 
 /** JSDoc */
 export interface EventHint {
