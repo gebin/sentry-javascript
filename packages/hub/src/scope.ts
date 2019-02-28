@@ -125,7 +125,7 @@ export class Scope implements ScopeInterface {
   public static clone(scope?: Scope): Scope {
     const newScope = new Scope();
     Object.assign(newScope, scope, {
-      scopeListeners: [],
+      _scopeListeners: [],
     });
     if (scope) {
       newScope._extra = { ...scope._extra };

@@ -69,8 +69,8 @@ export class GlobalHandlers implements Integration {
       const self = getCurrentHub().getIntegration(GlobalHandlers);
       if (self) {
         getCurrentHub().captureEvent(self._eventFromGlobalHandler(stack), {
-          originalException: error,
           data: { stack },
+          originalException: error,
         });
       }
     });
