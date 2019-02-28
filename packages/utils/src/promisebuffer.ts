@@ -2,7 +2,7 @@ import { SentryError } from './error';
 
 /** A simple queue that holds promises. */
 export class PromiseBuffer<T> {
-  public constructor(protected limit?: number) {}
+  public constructor(protected _limit?: number) {}
 
   /** Internal set of queued Promises */
   private readonly _buffer: Array<Promise<T>> = [];
@@ -11,7 +11,7 @@ export class PromiseBuffer<T> {
    * Says if the buffer is ready to take more requests
    */
   public isReady(): boolean {
-    return this.limit === undefined || this.length() < this.limit;
+    return this._limit === undefined || this.length() < this._limit;
   }
 
   /**

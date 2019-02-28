@@ -46,10 +46,10 @@ export class NodeBackend extends BaseBackend<NodeOptions> {
   /**
    * @inheritdoc
    */
-  protected setupTransport(): Transport {
+  protected _setupTransport(): Transport {
     if (!this._options.dsn) {
       // We return the noop transport here in case there is no Dsn.
-      return super.setupTransport();
+      return super._setupTransport();
     }
 
     const dsn = new Dsn(this._options.dsn);

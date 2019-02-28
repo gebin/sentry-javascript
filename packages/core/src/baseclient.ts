@@ -47,19 +47,19 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * will correspond to the client. When composing SDKs, however, the Backend
    * from the root SDK will be used.
    */
-  private readonly _backend: B;
+  protected readonly _backend: B;
 
   /** Options passed to the SDK. */
-  private readonly _options: O;
+  protected readonly _options: O;
 
   /**
    * The client Dsn, if specified in options. Without this Dsn, the SDK will be
    * disabled.
    */
-  private readonly _dsn?: Dsn;
+  protected readonly _dsn?: Dsn;
 
   /** Array of used integrations. */
-  private readonly _integrations: IntegrationIndex;
+  protected readonly _integrations: IntegrationIndex;
 
   /**
    * Initializes this client instance.
@@ -84,9 +84,9 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
   public captureException(exception: any, hint?: EventHint, scope?: Scope): string | undefined {
     let eventId: string | undefined = hint && hint.event_id;
 
-    this.getBackend()
+    this._getBackend()
       .eventFromException(exception, hint)
-      .then(event => this.processEvent(event, hint, scope))
+      .then(event => this._processEvent(event, hint, scope))
       .then(finalEvent => {
         eventId = finalEvent.event_id;
       })
@@ -104,11 +104,11 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
     let eventId: string | undefined = hint && hint.event_id;
 
     const promisedEvent = isPrimitive(message)
-      ? this.getBackend().eventFromMessage(`${message}`, level, hint)
-      : this.getBackend().eventFromException(message, hint);
+      ? this._getBackend().eventFromMessage(`${message}`, level, hint)
+      : this._getBackend().eventFromException(message, hint);
 
     promisedEvent
-      .then(event => this.processEvent(event, hint, scope))
+      .then(event => this._processEvent(event, hint, scope))
       .then(finalEvent => {
         eventId = finalEvent.event_id;
       })
@@ -124,7 +124,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    */
   public captureEvent(event: Event, hint?: EventHint, scope?: Scope): string | undefined {
     let eventId: string | undefined = hint && hint.event_id;
-    this.processEvent(event, hint, scope)
+    this._processEvent(event, hint, scope)
       .then(finalEvent => {
         eventId = finalEvent.event_id;
       })
@@ -149,12 +149,12 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
   }
 
   /** Returns the current backend. */
-  protected getBackend(): B {
+  protected _getBackend(): B {
     return this._backend;
   }
 
   /** Determines whether this SDK is enabled and a valid Dsn is present. */
-  protected isEnabled(): boolean {
+  protected _isEnabled(): boolean {
     return this.getOptions().enabled !== false && this._dsn !== undefined;
   }
 
@@ -172,7 +172,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * @param scope A scope containing event metadata.
    * @returns A new event with more information.
    */
-  protected prepareEvent(event: Event, scope?: Scope, hint?: EventHint): SyncPromise<Event | null> {
+  protected _prepareEvent(event: Event, scope?: Scope, hint?: EventHint): SyncPromise<Event | null> {
     const { environment, release, dist, maxValueLength = 250 } = this.getOptions();
 
     const prepared: Event = { ...event };
@@ -231,10 +231,10 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * @param scope A scope containing event metadata.
    * @returns A SyncPromise that resolves with the event or rejects in case event was/will not be send.
    */
-  protected processEvent(event: Event, hint?: EventHint, scope?: Scope): SyncPromise<Event> {
+  protected _processEvent(event: Event, hint?: EventHint, scope?: Scope): SyncPromise<Event> {
     const { beforeSend, sampleRate } = this.getOptions();
 
-    if (!this.isEnabled()) {
+    if (!this._isEnabled()) {
       return SyncPromise.reject('SDK not enabled, will not send event.');
     }
 
@@ -245,7 +245,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
     }
 
     return new SyncPromise((resolve, reject) => {
-      this.prepareEvent(event, scope, hint).then(prepared => {
+      this._prepareEvent(event, scope, hint).then(prepared => {
         if (prepared === null) {
           reject('An event processor returned null, will not send event.');
           return;
@@ -256,7 +256,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
         try {
           const isInternalException = hint && hint.data && (hint.data as { [key: string]: any }).__sentry__ === true;
           if (isInternalException || !beforeSend) {
-            this.getBackend().sendEvent(finalEvent);
+            this._getBackend().sendEvent(finalEvent);
             resolve(finalEvent);
             return;
           }
@@ -276,7 +276,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
             }
 
             // From here on we are really async
-            this.getBackend().sendEvent(finalEvent);
+            this._getBackend().sendEvent(finalEvent);
             resolve(finalEvent);
           }
         } catch (exception) {
@@ -307,7 +307,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
           return;
         }
         // From here on we are really async
-        this.getBackend().sendEvent(processedEvent);
+        this._getBackend().sendEvent(processedEvent);
         resolve(processedEvent);
       })
       .catch(e => {
@@ -319,7 +319,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * @inheritDoc
    */
   public async flush(timeout?: number): Promise<boolean> {
-    return this.getBackend()
+    return this._getBackend()
       .getTransport()
       .close(timeout);
   }

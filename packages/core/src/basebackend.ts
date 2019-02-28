@@ -66,13 +66,13 @@ export abstract class BaseBackend<O extends Options> implements Backend {
     if (!this._options.dsn) {
       logger.warn('No DSN provided, backend will not do anything.');
     }
-    this._transport = this.setupTransport();
+    this._transport = this._setupTransport();
   }
 
   /**
    * Sets up the transport so it can be used later to send requests.
    */
-  protected setupTransport(): Transport {
+  protected _setupTransport(): Transport {
     return new NoopTransport();
   }
 
