@@ -47,19 +47,19 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * will correspond to the client. When composing SDKs, however, the Backend
    * from the root SDK will be used.
    */
-  private readonly backend: B;
+  private readonly _backend: B;
 
   /** Options passed to the SDK. */
-  private readonly options: O;
+  private readonly _options: O;
 
   /**
    * The client Dsn, if specified in options. Without this Dsn, the SDK will be
    * disabled.
    */
-  private readonly dsn?: Dsn;
+  private readonly _dsn?: Dsn;
 
   /** Array of used integrations. */
-  private readonly integrations: IntegrationIndex;
+  private readonly _integrations: IntegrationIndex;
 
   /**
    * Initializes this client instance.
@@ -68,14 +68,14 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * @param options Options for the client.
    */
   protected constructor(backendClass: BackendClass<B, O>, options: O) {
-    this.backend = new backendClass(options);
-    this.options = options;
+    this._backend = new backendClass(options);
+    this._options = options;
 
     if (options.dsn) {
-      this.dsn = new Dsn(options.dsn);
+      this._dsn = new Dsn(options.dsn);
     }
 
-    this.integrations = setupIntegrations(this.options);
+    this._integrations = setupIntegrations(this._options);
   }
 
   /**
@@ -138,24 +138,24 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * @inheritDoc
    */
   public getDsn(): Dsn | undefined {
-    return this.dsn;
+    return this._dsn;
   }
 
   /**
    * @inheritDoc
    */
   public getOptions(): O {
-    return this.options;
+    return this._options;
   }
 
   /** Returns the current backend. */
   protected getBackend(): B {
-    return this.backend;
+    return this._backend;
   }
 
   /** Determines whether this SDK is enabled and a valid Dsn is present. */
   protected isEnabled(): boolean {
-    return this.getOptions().enabled !== false && this.dsn !== undefined;
+    return this.getOptions().enabled !== false && this._dsn !== undefined;
   }
 
   /**
@@ -265,7 +265,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
           if ((typeof beforeSendResult as any) === 'undefined') {
             logger.error('`beforeSend` method has to return `null` or a valid event.');
           } else if (isThenable(beforeSendResult)) {
-            this.handleAsyncBeforeSend(beforeSendResult as Promise<Event | null>, resolve, reject);
+            this._handleAsyncBeforeSend(beforeSendResult as Promise<Event | null>, resolve, reject);
           } else {
             finalEvent = beforeSendResult as Event | null;
 
@@ -295,7 +295,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
   /**
    * Resolves before send Promise and calls resolve/reject on parent SyncPromise.
    */
-  private handleAsyncBeforeSend(
+  private _handleAsyncBeforeSend(
     beforeSend: Promise<Event | null>,
     resolve: (event: Event) => void,
     reject: (reason: string) => void,
@@ -337,7 +337,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    * @inheritDoc
    */
   public getIntegrations(): IntegrationIndex {
-    return this.integrations || {};
+    return this._integrations || {};
   }
 
   /**
@@ -345,7 +345,7 @@ export abstract class BaseClient<B extends Backend, O extends Options> implement
    */
   public getIntegration<T extends Integration>(integration: IntegrationClass<T>): T | null {
     try {
-      return (this.integrations[integration.id] as T) || null;
+      return (this._integrations[integration.id] as T) || null;
     } catch (_oO) {
       logger.warn(`Cannot retrieve integration ${integration.id} from the current Client`);
       return null;

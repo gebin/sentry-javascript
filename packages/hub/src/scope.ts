@@ -162,7 +162,7 @@ export class Scope implements ScopeInterface {
    * Applies fingerprint from the scope to the event if there's one,
    * uses message if there's one instead or get rid of empty fingerprint
    */
-  private applyFingerprint(event: Event): void {
+  private _applyFingerprint(event: Event): void {
     // Make sure it's an array first and we actually have something in place
     event.fingerprint = event.fingerprint
       ? Array.isArray(event.fingerprint)
@@ -207,7 +207,7 @@ export class Scope implements ScopeInterface {
       event.level = this.level;
     }
 
-    this.applyFingerprint(event);
+    this._applyFingerprint(event);
 
     const hasNoBreadcrumbs = !event.breadcrumbs || event.breadcrumbs.length === 0;
     if (hasNoBreadcrumbs && this.breadcrumbs.length > 0) {

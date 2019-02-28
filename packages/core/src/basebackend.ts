@@ -55,18 +55,18 @@ export type BackendClass<B extends Backend, O extends Options> = new (options: O
  */
 export abstract class BaseBackend<O extends Options> implements Backend {
   /** Options passed to the SDK. */
-  protected readonly options: O;
+  protected readonly _options: O;
 
   /** Cached transport used internally. */
-  protected transport: Transport;
+  protected _transport: Transport;
 
   /** Creates a new backend instance. */
   public constructor(options: O) {
-    this.options = options;
-    if (!this.options.dsn) {
+    this._options = options;
+    if (!this._options.dsn) {
       logger.warn('No DSN provided, backend will not do anything.');
     }
-    this.transport = this.setupTransport();
+    this._transport = this.setupTransport();
   }
 
   /**
@@ -94,7 +94,7 @@ export abstract class BaseBackend<O extends Options> implements Backend {
    * @inheritDoc
    */
   public sendEvent(event: Event): void {
-    this.transport.sendEvent(event).catch(reason => {
+    this._transport.sendEvent(event).catch(reason => {
       logger.error(`Error while sending event: ${reason}`);
     });
   }
@@ -103,6 +103,6 @@ export abstract class BaseBackend<O extends Options> implements Backend {
    * @inheritDoc
    */
   public getTransport(): Transport {
-    return this.transport;
+    return this._transport;
   }
 }
